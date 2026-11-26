@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thanksgiving Escape Room</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,Helvetica,sans-serif;
+ background:linear-gradient(135deg,#2b160d,#6b3519 48%,#1d0e09);
+ color:#fff7ed;min-height:100vh;
+}
+:root{--gold:#f4b942;--cream:#fff1d6;--brown:#3a1d12;--red:#a83b24;--green:#496b3c}
+.container{max-width:1100px;margin:auto;padding:18px}
+.header{
+ background:rgba(42,20,11,.95);border:2px solid var(--gold);
+ border-radius:18px;padding:18px;text-align:center;
+ box-shadow:0 8px 30px #0008;position:sticky;top:8px;z-index:5
+}
+.header h1{margin:3px 0;font-size:clamp(18px,4vw,30px);color:#ffd77a}
+.header h2{margin:5px 0;font-size:clamp(15px,3vw,22px)}
+.header p{margin:7px 0;color:#f8dcb5}
+.progress{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.room-dot{width:29px;height:29px;border-radius:50%;border:1px solid #d5a36b;background:#25140d;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px}
+.room-dot.active{background:var(--gold);color:#351b0c}
+.room-dot.done{background:var(--green);border-color:#9fc58c}
+.room{display:none;margin-top:20px}
+.room.active{display:block}
+.card{
+ background:linear-gradient(145deg,#4a2414,#32170e);
+ border:1px solid #b87539;border-radius:18px;padding:22px;
+ box-shadow:0 10px 35px #0007;
+}
+.hero{
+ display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:stretch
+}
+.visual{
+ min-height:250px;border-radius:16px;overflow:hidden;position:relative;
+ background:linear-gradient(135deg,#7d3d1c,#d18a36 55%,#5d2915);
+ border:2px solid #c58b48;display:flex;align-items:center;justify-content:center;
+}
+.visual .emoji{font-size:100px;filter:drop-shadow(0 7px 7px #0008)}
+.visual span{position:absolute;bottom:10px;left:12px;background:#2a150de8;padding:7px 10px;border-radius:9px;font-size:12px}
+h3{color:#ffd77a;font-size:25px;margin:5px 0 10px}
+h4{color:#ffd77a;margin-bottom:7px}
+p,li{line-height:1.55}
+.instruction{background:#fff1d6;color:#32170e;border-radius:12px;padding:14px;margin:12px 0}
+.clue{background:#24130d;border-left:5px solid var(--gold);padding:12px;border-radius:8px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.option,.match{
+ background:#5a2c18;border:2px solid #9a5d2f;border-radius:12px;padding:14px;cursor:pointer;
+ color:white;transition:.2s;text-align:center
+}
+.option:hover,.match:hover{transform:translateY(-2px);border-color:var(--gold)}
+.option.selected{border-color:#fff1a6;background:#7c421e}
+.correct{border-color:#9ed18b!important;background:#35522d!important}
+.wrong{border-color:#e78d78!important;background:#6d2b20!important}
+input{
+ width:100%;padding:13px;border-radius:9px;border:2px solid #9a5d2f;
+ background:#fff7ed;color:#2b160d;font-size:18px
+}
+button{
+ border:0;border-radius:10px;padding:12px 18px;background:var(--gold);
+ color:#2b160d;font-weight:bold;cursor:pointer;margin:6px 4px
+}
+button:hover{filter:brightness(1.08)}
+button.secondary{background:#7a4223;color:#fff}
+.feedback{min-height:25px;font-weight:bold;margin:8px 0}
+.lock{font-size:45px;text-align:center;margin:10px}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+td,th{border:1px solid #9a5d2f;padding:10px;text-align:left}
+th{background:#6a351b;color:#ffd77a}
+td{background:#32170e}
+.drag-area{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.drop{
+ min-height:80px;border:2px dashed #b87539;border-radius:12px;padding:12px;
+ background:#24130d
+}
+.draggable{
+ padding:11px;margin:7px 0;background:#6b3519;border:1px solid #c58b48;border-radius:9px;cursor:grab
+}
+.final{font-size:22px;text-align:center;color:#ffd77a}
+.small{font-size:13px;color:#e8cba8}
+@media(max-width:700px){.hero,.drag-area{grid-template-columns:1fr}.header{position:relative}.visual{min-height:190px}.visual .emoji{font-size:75px}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="header">
+<h1>English VI – Mr. Oscar Herrera – CEUTEC</h1>
+<h2>THANKSGIVING ESCAPE ROOM</h2>
+<p>Passive Voice & Celebrations | A2 Level</p>
+<div class="progress" id="progress"></div>
+</header>
+
+<!-- ROOM 1 -->
+<section class="room active" id="room1">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 1: The Thanksgiving House</h3>
+<div class="instruction"><b>Mission:</b> The Thanksgiving house is locked. Find the correct passive sentence to open the first door.</div>
+<div class="clue">Clue: The family prepares the food every Thanksgiving.</div>
+<div class="grid" id="r1opts">
+<div class="option" onclick="choose(this,false)">The food prepares the family.</div>
+<div class="option" onclick="choose(this,true)">The food is prepared by the family.</div>
+<div class="option" onclick="choose(this,false)">The family is prepare the food.</div>
+<div class="option" onclick="choose(this,false)">The food was preparing by the family.</div>
+</div>
+<div class="feedback" id="r1fb"></div>
+<input id="r1code" placeholder="Enter the 4-digit code">
+<button onclick="room1()">Unlock Door</button>
+</div>
+<div class="visual"><div class="emoji">🏠🦃</div><span>Thanksgiving House</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 2 -->
+<section class="room" id="room2">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 2: The Turkey Mystery</h3>
+<div class="instruction"><b>Mission:</b> The turkey disappeared from the kitchen. Read the clues and choose the correct answers.</div>
+<div class="clue">1. The turkey ___ by Grandma yesterday.<br>
+A) cooked &nbsp; B) was cooked &nbsp; C) is cook</div>
+<div class="clue">2. The table ___ before dinner.<br>
+A) was decorated &nbsp; B) decorated &nbsp; C) is decorating</div>
+<div class="clue">3. The plates ___ by the children.<br>
+A) were washed &nbsp; B) was washed &nbsp; C) wash</div>
+<p>Correct answers give you the code: <b>1 = B, 2 = A, 3 = A</b>. Convert B-A-A using the keypad code: B=2, A=1.</p>
+<input id="r2code" placeholder="Enter the 3-digit code">
+<button onclick="room2()">Unlock Door</button>
+<div class="feedback" id="r2fb"></div>
+</div>
+<div class="visual"><div class="emoji">🦃🔎</div><span>The missing turkey</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 3 -->
+<section class="room" id="room3">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 3: The Family Table</h3>
+<div class="instruction"><b>Mission:</b> Choose the passive sentence for each picture/object. The first letters of the correct answers make the code.</div>
+<div class="grid">
+<div><h4>🍽️ Dinner</h4><div class="option" onclick="mark(this,true)">The dinner is served at 6:00.</div><div class="option" onclick="mark(this,false)">The dinner serves the family.</div></div>
+<div><h4>🥧 Pie</h4><div class="option" onclick="mark(this,false)">Grandma is baked the pie.</div><div class="option" onclick="mark(this,true)">The pie is baked by Grandma.</div></div>
+<div><h4>🕯️ Table</h4><div class="option" onclick="mark(this,true)">The table is decorated with candles.</div><div class="option" onclick="mark(this,false)">The table decorate candles.</div></div>
+</div>
+<div class="clue">Take the first letters of the three correct sentences: S – P – T. Use the number of letters in each: 1st = 1, 2nd = 1, 3rd = 1. Add 7 before them.</div>
+<input id="r3code" placeholder="Enter the 4-digit code">
+<button onclick="room3()">Unlock Door</button>
+<div class="feedback" id="r3fb"></div>
+</div>
+<div class="visual"><div class="emoji">🍽️🥧🕯️</div><span>The Thanksgiving table</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 4 -->
+<section class="room" id="room4">
+<div class="card">
+<h3>Room 4: The Secret Recipe</h3>
+<div class="instruction"><b>Mission:</b> Put the Thanksgiving recipe in the correct order. Then read the passive sentences.</div>
+<div class="clue">Recipe cards:</div>
+<div id="recipe">
+<div class="draggable" draggable="true" data-n="3">3. The turkey is roasted in the oven.</div>
+<div class="draggable" draggable="true" data-n="1">1. The turkey is cleaned and seasoned.</div>
+<div class="draggable" draggable="true" data-n="4">4. The turkey is served with vegetables.</div>
+<div class="draggable" draggable="true" data-n="2">2. The turkey is placed in a large pan.</div>
+</div>
+<p class="small">Type the four correct numbers in order.</p>
+<input id="r4code" placeholder="Example: 1234">
+<button onclick="room4()">Unlock Door</button>
+<div class="feedback" id="r4fb"></div>
+</div>
+</section>
+
+<!-- ROOM 5 -->
+<section class="room" id="room5">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 5: The Missing Invitation</h3>
+<div class="instruction">An invitation has missing words. Choose the correct words to rebuild it.</div>
+<div class="clue">
+“Dear Family,<br><br>
+You are invited to our Thanksgiving dinner. The house ___ (1) decorated with autumn leaves. The turkey ___ (2) prepared by Dad. The desserts ___ (3) made by Mom. Dinner ___ (4) served at 5:00 p.m.”
+</div>
+<div class="grid">
+<div class="option" onclick="setR5(1,'was')">1: was</div>
+<div class="option" onclick="setR5(1,'were')">1: were</div>
+<div class="option" onclick="setR5(2,'was')">2: was</div>
+<div class="option" onclick="setR5(2,'were')">2: were</div>
+<div class="option" onclick="setR5(3,'was')">3: was</div>
+<div class="option" onclick="setR5(3,'were')">3: were</div>
+<div class="option" onclick="setR5(4,'was')">4: was</div>
+<div class="option" onclick="setR5(4,'were')">4: were</div>
+</div>
+<p>When finished, use the answers as numbers: WAS = 1, WERE = 2.</p>
+<input id="r5code" placeholder="Enter the 4-digit code">
+<button onclick="room5()">Unlock Door</button>
+<div class="feedback" id="r5fb"></div>
+</div>
+<div class="visual"><div class="emoji">✉️🍂</div><span>Invitation</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 6 -->
+<section class="room" id="room6">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 6: Celebrations Around the World</h3>
+<div class="instruction">Read the short facts. Match each celebration with the correct passive sentence.</div>
+<table>
+<tr><th>Celebration</th><th>Fact</th></tr>
+<tr><td>Thanksgiving</td><td>Families eat a special meal.</td></tr>
+<tr><td>Christmas</td><td>People decorate trees.</td></tr>
+<tr><td>Birthday</td><td>People give presents.</td></tr>
+<tr><td>Halloween</td><td>Children wear costumes.</td></tr>
+</table>
+<div class="clue">Change each sentence to passive voice. Then count the words in each passive sentence.</div>
+<p>1. A special meal is eaten by families. = <b>7</b> words<br>
+2. Trees are decorated by people. = <b>5</b> words<br>
+3. Presents are given by people. = <b>5</b> words<br>
+4. Costumes are worn by children. = <b>5</b> words</p>
+<input id="r6code" placeholder="Enter the 4-digit code">
+<button onclick="room6()">Unlock Door</button>
+<div class="feedback" id="r6fb"></div>
+</div>
+<div class="visual"><div class="emoji">🎄🎂🎃🦃</div><span>Celebrations</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 7 -->
+<section class="room" id="room7">
+<div class="card">
+<h3>Room 7: The Dinner Challenge</h3>
+<div class="instruction">Drag each food item to the correct sentence.</div>
+<div class="drag-area">
+<div>
+<div class="draggable" draggable="true" data-item="turkey">🦃 Turkey</div>
+<div class="draggable" draggable="true" data-item="pie">🥧 Pumpkin pie</div>
+<div class="draggable" draggable="true" data-item="bread">🍞 Bread</div>
+</div>
+<div>
+<div class="drop" data-answer="turkey">“The ______ is roasted for Thanksgiving.”</div>
+<div class="drop" data-answer="pie">“The ______ is baked in the oven.”</div>
+<div class="drop" data-answer="bread">“The ______ is served with dinner.”</div>
+</div>
+</div>
+<div class="clue">After all three matches are correct, the kitchen door gives you the code: 2468.</div>
+<input id="r7code" placeholder="Enter the code">
+<button onclick="room7()">Unlock Door</button>
+<div class="feedback" id="r7fb"></div>
+</div>
+</section>
+
+<!-- ROOM 8 -->
+<section class="room" id="room8">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 8: The Hidden Message</h3>
+<div class="instruction">Find the passive voice verbs. Take the first letter of each verb.</div>
+<div class="clue">
+“The table <b>was decorated</b> with leaves. The turkey <b>was prepared</b> early. The plates <b>were placed</b> on the table. The desserts <b>were made</b> in the morning.”
+</div>
+<p>First letters: <b>D – P – P – M</b></p>
+<p>Now use the position of each letter in the alphabet: D=4, P=16, P=16, M=13. Add the first two digits only.</p>
+<input id="r8code" placeholder="Enter the 4-digit code">
+<button onclick="room8()">Unlock Door</button>
+<div class="feedback" id="r8fb"></div>
+</div>
+<div class="visual"><div class="emoji">📜🔐</div><span>Hidden message</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 9 -->
+<section class="room" id="room9">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 9: The Locked Kitchen</h3>
+<div class="instruction">This is the difficult room. Solve all four clues. The answers create a 6-digit code.</div>
+<div class="clue">
+<b>Clue 1:</b> “The turkey was ______ by Grandma.”<br>
+A) cook &nbsp; B) cooked &nbsp; C) cooking<br><b>Answer:</b> B
+</div>
+<div class="clue">
+<b>Clue 2:</b> “The plates were ______ by the children.”<br>
+A) washed &nbsp; B) wash &nbsp; C) washing<br><b>Answer:</b> A
+</div>
+<div class="clue">
+<b>Clue 3:</b> “The cake was ______ in the kitchen.”<br>
+A) bake &nbsp; B) baking &nbsp; C) baked<br><b>Answer:</b> C
+</div>
+<div class="clue">
+<b>Clue 4:</b> “The table was ______ before dinner.”<br>
+A) decorated &nbsp; B) decorate &nbsp; C) decorating<br><b>Answer:</b> A
+</div>
+<p>Use alphabet positions: A=1, B=2, C=3. The four answers give 2-1-3-1. Add the number of letters in <b>THANKSGIVING</b> (12) to the end.</p>
+<input id="r9code" placeholder="Enter the 6-digit code">
+<button onclick="room9()">Unlock Door</button>
+<div class="feedback" id="r9fb"></div>
+</div>
+<div class="visual"><div class="emoji">🔐🍳</div><span>Locked Kitchen</span></div>
+</div>
+</div>
+</section>
+
+<!-- ROOM 10 -->
+<section class="room" id="room10">
+<div class="card">
+<div class="hero">
+<div>
+<h3>Room 10: The Final Thanksgiving Door</h3>
+<div class="instruction"><b>Final Mission:</b> You are at the last door. Read carefully and solve the final puzzle.</div>
+<div class="clue">
+“Thanksgiving dinner is prepared by the family. The table is decorated with leaves. The turkey is served at five o'clock. The pumpkin pie is made by Grandma. The dishes are washed after dinner.”
+</div>
+<p><b>Step 1:</b> How many passive sentences are there?</p>
+<p><b>Step 2:</b> How many times do you see <b>is</b>?</p>
+<p><b>Step 3:</b> How many times do you see <b>by</b>?</p>
+<p><b>Step 4:</b> How many passive sentences use <b>was/were</b>?</p>
+<p>Put the four answers together.</p>
+<input id="r10code" placeholder="Enter the final 4-digit code">
+<button onclick="room10()">Open Final Door</button>
+<div class="feedback" id="r10fb"></div>
+</div>
+<div class="visual"><div class="emoji">🚪🦃🏆</div><span>Final Door</span></div>
+</div>
+</div>
+</section>
+
+<div id="finish" style="display:none;margin-top:20px">
+<div class="card final">
+<div style="font-size:85px">🦃🎉🍂</div>
+<h2>CONGRATULATIONS!</h2>
+<p>You escaped the Thanksgiving house!</p>
+<p>You completed all 10 rooms and practiced the <b>Passive Voice</b> with <b>Thanksgiving and celebrations</b>.</p>
+<p><b>Excellent teamwork!</b></p>
+<button onclick="location.reload()">Play Again</button>
+</div>
+</div>
+
+</div>
+
+<script>
+let current=1;
+const progress=document.getElementById('progress');
+for(let i=1;i<=10;i++){
+ let d=document.createElement('div');d.className='room-dot'+(i===1?' active':'');d.id='dot'+i;d.textContent=i;progress.appendChild(d);
+}
+function choose(el,correct){
+ el.parentElement.querySelectorAll('.option').forEach(x=>x.classList.remove('correct','wrong'));
+ el.classList.add(correct?'correct':'wrong');
+ document.getElementById('r1fb').textContent=correct?'Good! You found the passive sentence.':'Try again. Look for was/is + past participle.';
+}
+function mark(el,correct){
+ el.classList.add(correct?'correct':'wrong');
+}
+function next(){
+ document.getElementById('room'+current).classList.remove('active');
+ document.getElementById('dot'+current).classList.remove('active');
+ document.getElementById('dot'+current).classList.add('done');
+ current++;
+ if(current<=10){
+  document.getElementById('room'+current).classList.add('active');
+  document.getElementById('dot'+current).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+}
+function fail(id,msg){document.getElementById(id).textContent=msg;document.getElementById(id).style.color='#ffb09c'}
+function pass(id,msg){document.getElementById(id).textContent=msg;document.getElementById(id).style.color='#b9e5a5'}
+function room1(){if(document.getElementById('r1code').value.trim()==='2468')next();else fail('r1fb','Not yet. Hint: The correct code is hidden in the four options.')}
+function room2(){if(document.getElementById('r2code').value.trim()==='211')next();else fail('r2fb','Try again. B=2 and A=1.')}
+function room3(){if(document.getElementById('r3code').value.trim()==='7111')next();else fail('r3fb','Use the clue carefully. The code starts with 7.')}
+let r5={1:null,2:null,3:null,4:null};
+function setR5(n,v){r5[n]=v}
+function room5(){if(r5[1]==='was'&&r5[2]==='was'&&r5[3]==='were'&&r5[4]==='was'&&document.getElementById('r5code').value.trim()==='1121')next();else fail('r5fb','Check the singular and plural subjects.')}
+function room4(){if(document.getElementById('r4code').value.trim()==='1234')next();else fail('r4fb','Start with cleaning and seasoning. Then follow the recipe.')}
+function room6(){if(document.getElementById('r6code').value.trim()==='7555')next();else fail('r6fb','Count the words in each passive sentence.')}
+let dragged=null;
+document.querySelectorAll('.draggable').forEach(el=>{
+ el.addEventListener('dragstart',()=>dragged=el);
+ el.addEventListener('touchstart',()=>{dragged=el},{passive:true});
+});
+document.querySelectorAll('.drop').forEach(el=>{
+ el.addEventListener('dragover',e=>e.preventDefault());
+ el.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(dragged && dragged.dataset.item===el.dataset.answer){
+   el.textContent='✓ '+dragged.textContent;el.classList.add('correct');dragged.style.display='none';
+  }else el.classList.add('wrong');
+ });
+});
+function room7(){if(document.querySelectorAll('.drop.correct').length===3&&document.getElementById('r7code').value.trim()==='2468')next();else fail('r7fb','Match all three items correctly, then enter the code.')}
+function room8(){if(document.getElementById('r8code').value.trim()==='4161')next();else fail('r8fb','Use the alphabet positions of D and P and follow the instruction.')}
+function room9(){if(document.getElementById('r9code').value.trim()==='213112')next();else fail('r9fb','A=1, B=2, C=3. The last two digits are the number of letters in THANKSGIVING.')}
+function room10(){if(document.getElementById('r10code').value.trim()==='5200'){document.getElementById('room10').classList.remove('active');document.getElementById('dot10').classList.remove('active');document.getElementById('dot10').classList.add('done');document.getElementById('finish').style.display='block';window.scrollTo({top:0,behavior:'smooth'});}else fail('r10fb','Count carefully. Remember: only the sentences with is/are/was/were + past participle are passive.')}
+</script>
+</body>
+</html>
